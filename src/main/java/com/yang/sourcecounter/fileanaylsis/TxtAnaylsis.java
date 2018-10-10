@@ -18,17 +18,21 @@ import java.util.regex.Pattern;
  */
 public class TxtAnaylsis {
 
-    private Pattern pattern = Pattern.compile("\\b(.+)\\b(/d+)\\b(/d+)\\b(/d+)\\b(/d+)\\b");
+    private static Pattern pattern = Pattern.compile("(.+)\\b\\s*\\b(\\d+)\\b\\s*\\b(\\d+)\\b\\s*\\b(\\d+)\\b\\s*\\b(\\d+)\\b");
 
-    public List<ProjectSourceAmount> getExcelDataFromTXT(String clocTxt) throws Exception {
+    public static List<ProjectSourceAmount> getExcelDataFromTXT(String clocTxt) throws Exception {
         List<ProjectSourceAmount> result = new ArrayList<ProjectSourceAmount>();
 
         File txtPath = new File(clocTxt);
-        ProjectSourceAmount projectSourceAmount = new ProjectSourceAmount();
-        projectSourceAmount.setPorjectName(clocTxt.substring(0,clocTxt.lastIndexOf(".")));
         List<File> projectTxts = Arrays.asList(txtPath.listFiles());
 
         for (File projectTxt : projectTxts) {
+
+            String txtName = projectTxt.getName();
+            ProjectSourceAmount projectSourceAmount = new ProjectSourceAmount();
+            projectSourceAmount.setPorjectName(txtName.substring(0, txtName.lastIndexOf(".")));
+            projectSourceAmount.setSourceAmountEntityList(new ArrayList<SourceAmountEntity>());
+
             boolean arriveCoreTxt = false;
             int lineCount = 0;
             List<String> needStrings = new ArrayList<String>();
@@ -44,10 +48,14 @@ public class TxtAnaylsis {
 
                 if (arriveCoreTxt && '-' != tempStr.charAt(0)) {
                     Matcher matcher = pattern.matcher(tempStr);
-                    if(matcher.find()){
+                    if (matcher.find()) {
                         SourceAmountEntity sourceAmountEntity = new SourceAmountEntity();
                         // Language
-                        sourceAmountEntity.setLanguage(matcher.group(1));
+                        String language = matcher.group(1);
+                        if ("SUM:".equals(language)) {
+                            language = language.replace(":", "");
+                        }
+                        sourceAmountEntity.setLanguage(language);
                         // files
                         sourceAmountEntity.setFiles(Integer.parseInt(matcher.group(2)));
                         // blank
@@ -56,9 +64,13 @@ public class TxtAnaylsis {
                         sourceAmountEntity.setComment(Integer.parseInt(matcher.group(4)));
                         // code
                         sourceAmountEntity.setCode(Integer.parseInt(matcher.group(5)));
+
+                        projectSourceAmount.getSourceAmountEntityList().add(sourceAmountEntity);
                     }
                 }
             }
+
+            result.add(projectSourceAmount);
         }
 
         return result;

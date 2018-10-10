@@ -3,7 +3,9 @@ package com.yang.sourcecounter.base;
 import com.yang.sourcecounter.command.CommandExecute;
 import com.yang.sourcecounter.command.GitCommandExecute;
 import com.yang.sourcecounter.command.WindowsCmdExecute;
-import org.eclipse.jgit.util.FileUtils;
+import com.yang.sourcecounter.entity.ProjectSourceAmount;
+import com.yang.sourcecounter.fileanaylsis.TxtAnaylsis;
+import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -36,7 +38,7 @@ public class MainAcess {
 
         // 获取cloc路径
         URL classUrl = Thread.currentThread().getContextClassLoader().getResource("");
-            String clocBasePath = classUrl.getPath();
+        String clocBasePath = classUrl.getPath();
 
         // 读取配置获取git目录更新所有git项目
         String gitBasePath = properties.getProperty("gitBasePath");
@@ -52,7 +54,7 @@ public class MainAcess {
         // 清空clocTxt文件夹
         File clocTxt = new File(clocBasePath + "clocTxt");
         if (clocTxt.exists()) {
-            FileUtils.delete(clocTxt);
+            FileUtils.deleteDirectory(clocTxt);
         }
         clocTxt.mkdirs();
 
@@ -79,9 +81,10 @@ public class MainAcess {
         }
 
         // 解析cloc生成的文件
-
+        List<ProjectSourceAmount> projectSourceAmounts = TxtAnaylsis.getExcelDataFromTXT(clocTxt.getPath());
 
         // 生成报告excle
+        
 
         // 将报告发送给用户
     }
