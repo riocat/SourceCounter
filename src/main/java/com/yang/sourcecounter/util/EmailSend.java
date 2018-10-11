@@ -46,7 +46,7 @@ public class EmailSend {
         //设置调试信息在控制台打印出来
         session.setDebug(true);
         //3、创建邮件的实例对象
-        Message msg = createMimeMessage(session, reportPath, properties, true);
+        Message msg = createMimeMessage(session, reportPath, properties, false);
         //4、根据session对象获取邮件传输对象Transport
         Transport transport = session.getTransport();
         //设置发件人的账户名和密码
@@ -76,11 +76,11 @@ public class EmailSend {
         }
 
         //4.设置邮件主题
-        String subject = CommonsDataFormat.SDF_YMDHMS.format(new Date()) + "日 " + projectProperties.getProperty("subject");
+        String subject = CommonsDataFormat.SDF_YMD.format(new Date()) + "日 " + projectProperties.getProperty("subject");
         msg.setSubject(subject, "UTF-8");
 
         MimeBodyPart text = new MimeBodyPart();
-        String content = CommonsDataFormat.SDF_YMDHMS.format(new Date()) + "日 " + projectProperties.getProperty("subject");
+        String content = CommonsDataFormat.SDF_YMDHMS.format(new Date()) + " " + projectProperties.getProperty("subject");
         text.setContent(content, "text/html;charset=UTF-8");//下面是设置邮件正文
 
         // 9. 创建附件"节点"
@@ -91,7 +91,8 @@ public class EmailSend {
         attachment.setDataHandler(dh2);
         String name = dh2.getName();
         // 设置附件的文件名（需要编码）
-        attachment.setFileName(MimeUtility.encodeWord(dh2.getName()));
+        String fileName = MimeUtility.encodeWord(name);
+        attachment.setFileName(fileName);
 
         // 10. 设置（文本+图片）和 附件 的关系（合成一个大的混合"节点" / Multipart ）
         MimeMultipart mm = new MimeMultipart();
