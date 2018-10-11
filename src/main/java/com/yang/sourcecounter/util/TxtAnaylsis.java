@@ -1,11 +1,10 @@
-package com.yang.sourcecounter.fileanaylsis;
+package com.yang.sourcecounter.util;
 
 import com.yang.sourcecounter.entity.ProjectSourceAmount;
 import com.yang.sourcecounter.entity.SourceAmountEntity;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,7 +29,7 @@ public class TxtAnaylsis {
 
             String txtName = projectTxt.getName();
             ProjectSourceAmount projectSourceAmount = new ProjectSourceAmount();
-            projectSourceAmount.setPorjectName(txtName.substring(0, txtName.lastIndexOf(".")));
+            projectSourceAmount.setProjectName(txtName.substring(0, txtName.lastIndexOf(".")));
             projectSourceAmount.setSourceAmountEntityList(new ArrayList<SourceAmountEntity>());
 
             boolean arriveCoreTxt = false;
@@ -51,7 +50,7 @@ public class TxtAnaylsis {
                     if (matcher.find()) {
                         SourceAmountEntity sourceAmountEntity = new SourceAmountEntity();
                         // Language
-                        String language = matcher.group(1);
+                        String language = matcher.group(1).trim();
                         if ("SUM:".equals(language)) {
                             language = language.replace(":", "");
                         }

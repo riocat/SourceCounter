@@ -4,10 +4,14 @@ import com.yang.sourcecounter.command.CommandExecute;
 import com.yang.sourcecounter.command.GitCommandExecute;
 import com.yang.sourcecounter.command.WindowsCmdExecute;
 import com.yang.sourcecounter.entity.ProjectSourceAmount;
-import com.yang.sourcecounter.fileanaylsis.TxtAnaylsis;
+import com.yang.sourcecounter.entity.SourceAmountEntity;
+import com.yang.sourcecounter.util.EmailSend;
+import com.yang.sourcecounter.util.ExcelGeneraor;
+import com.yang.sourcecounter.util.TxtAnaylsis;
 import net.sf.jxls.transformer.XLSTransformer;
 import org.apache.commons.io.FileUtils;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.charts.LayoutMode;
 
 import java.io.*;
 import java.net.URL;
@@ -20,6 +24,8 @@ public class MainAcess {
 
     public static final String MAIN_PROPERTIES = "main.properties";
 
+    public static final String LANGUAGE = "";
+
     public static void main(String[] args) throws Exception {
 
         // 获取所有配置
@@ -27,7 +33,7 @@ public class MainAcess {
         URL propertiesUrl = MainAcess.class.getClassLoader().getResource(MainAcess.MAIN_PROPERTIES);
         InputStream ins = new FileInputStream(propertiesUrl.getFile());
         try {
-            properties.load(ins);
+            properties.load(new InputStreamReader(ins, "UTF-8"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -79,165 +85,37 @@ public class MainAcess {
         // 解析cloc生成的文件
         List<ProjectSourceAmount> projectSourceAmounts = TxtAnaylsis.getExcelDataFromTXT(clocTxt.getPath());
 
+        // 只保留每个项目的总和数据
+        String sumonly = properties.getProperty("sumonly");
+        if (sumonly != null && "true".equals(sumonly)) {
+            for (ProjectSourceAmount projectSourceAmount : projectSourceAmounts) {
+                List<SourceAmountEntity> sourceAmountEntityList = projectSourceAmount.getSourceAmountEntityList();
+/*                List<SourceAmountEntity> targetList = sourceAmountEntityList.stream().filter((sourceAmountEntity) -> {
+                    return "SUM".equals(sourceAmountEntity.getLanguage());
+                });*/
+
+                List<SourceAmountEntity> targetList = new ArrayList<SourceAmountEntity>();
+                for (SourceAmountEntity sourceAmountEntity : sourceAmountEntityList) {
+                    if ("SUM".equals(sourceAmountEntity.getLanguage())) {
+                        targetList.add(sourceAmountEntity);
+                        break;
+                    }
+                }
+                projectSourceAmount.setSourceAmountEntityList(targetList);
+            }
+        }
+
         // 生成报告excle
-        createExcel(projectSourceAmounts);
+        // 清空excle报告文件夹
+        File reportDirectory = new File(clocBasePath + "report");
+        if (reportDirectory.exists()) {
+            FileUtils.deleteDirectory(reportDirectory);
+        }
+        reportDirectory.mkdirs();
+        ExcelGeneraor excelGeneraor = ExcelGeneraor.getExcelGeneraor();
+        String reportPath = excelGeneraor.createExcel(projectSourceAmounts, reportDirectory, properties, classUrl);
 
         // 将报告发送给用户
+        EmailSend.getEmailSend().sendReportEmail(reportPath, properties);
     }
-
-    public static void createExcel(List<ProjectSourceAmount> projectSourceAmounts) throws Exception {
-        String tempBasePath = "/home/emplat/temp";
-        tempBasePath.replaceAll("\\/", "\\" + File.separator);
-        File basePath = new File(tempBasePath);
-        if (!basePath.exists()) {
-            basePath.mkdirs();
-        }
-        String tempPath = tempBasePath + File.separator + new Date().getTime() + ".xlsx";
-        XLSTransformer transformer = new XLSTransformer();
-        Map<String, Object> map = new HashMap<String, Object>();
-        map.put("contractLedgers", "");
-        InputStream is = MainAcess.class.getResourceAsStream("/template/ContractLedgerTemplate.xlsx");
-        Workbook workbook = transformer.transformXLS(is, map);
-        OutputStream tempOS = new FileOutputStream(tempPath);
-        workbook.write(tempOS);
-        tempOS.flush();
-        tempOS.close();
-    }
-
-    /*private String getExcel(String id, HttpServletRequest request) throws Exception {
-        String path = request.getSession().getServletContext().getRealPath("") + "/uploads/";
-
-        path.replaceAll("\\/", "\\" + File.separator);
-        File tmepBasePath = new File(path);
-        if (!tmepBasePath.exists()) {
-            tmepBasePath.mkdirs();
-        }
-
-        CapitalJournal capitalJournal = capitalJournalService.selectByPrimaryKey(id);
-        String basePath = "/Template/CapitalJournalTemplate/template/";
-        String templateFile = "";
-        String journalDateString = "";
-        String sheetName = "";
-        SimpleDateFormat sdfOne = new SimpleDateFormat("yyyy年 MM月 dd日");
-        SimpleDateFormat sdfTwo = new SimpleDateFormat("yyyy.MM.dd");
-        Map<String, Object> map = new HashMap<String, Object>();
-        switch (capitalJournal.getFkCapitalJournalType()) {
-            case 1:
-                map.put("ascriptionType", "博智集团");
-                map.put("datas", capitalJournalService.getGroupReportDatas(capitalJournal));
-                templateFile = basePath + "jituantemplate.xls";
-                journalDateString = sdfTwo.format(capitalJournal.getJournalDate());
-                sheetName = "集团";
-                break;
-            case 2:
-                String ascriptionTypeName = "";
-                switch (capitalJournal.getAscriptionType()) {
-                    case 2:
-                        ascriptionTypeName = "博智置业";
-                        map.put("ascription", "天津博智置业发展有限公司");
-                        sheetName = "博智";
-                        break;
-                    case 9:
-                        ascriptionTypeName = "理想置地";
-                        map.put("ascription", "天津理想置地有限公司");
-                        sheetName = "理想";
-                        break;
-                    case 10:
-                        ascriptionTypeName = "天津博智南郡投资有限公司";
-                        map.put("ascription", "天津博智南郡投资有限公司");
-                        sheetName = "南郡";
-                        break;
-                    case 11:
-                        ascriptionTypeName = "天津博智陈塘商务信息咨询有限公司";
-                        map.put("ascription", "天津博智陈塘商务信息咨询有限公司");
-                        sheetName = "信息";
-                        break;
-                    case 12:
-                        ascriptionTypeName = "天津亿隆博远企业管理咨询有限公司";
-                        map.put("ascription", "天津亿隆博远企业管理咨询有限公司");
-                        sheetName = "亿龙博远";
-                        break;
-                    case 13:
-                        ascriptionTypeName = "境外公司";
-                        map.put("ascription", "境外公司");
-                        sheetName = "境外公司";
-                        break;
-                }
-                map.put("ascriptionType", ascriptionTypeName);
-                map.put("datas", capitalJournalService.getReportDatas(capitalJournal));
-                templateFile = basePath + "zhiyetemplate.xls";
-                journalDateString = sdfOne.format(capitalJournal.getJournalDate());
-                break;
-            case 3:
-                map.put("ascriptionType", "天兴投资（宝坻）");
-                map.put("ascription", "天津天兴投资发展有限公司（宝坻）");
-                map.put("datas", capitalJournalService.getReportDatas(capitalJournal));
-                templateFile = basePath + "tianxingtemplate.xls";
-                journalDateString = sdfOne.format(capitalJournal.getJournalDate());
-                sheetName = "天兴";
-                break;
-            case 4:
-                map.put("ascriptionType", "蓝山投资");
-                map.put("ascription", "天津南郡蓝山投资有限公司");
-                map.put("datas", capitalJournalService.getReportDatas(capitalJournal));
-                templateFile = basePath + "lanshantemplate.xls";
-                journalDateString = sdfOne.format(capitalJournal.getJournalDate());
-                sheetName = "蓝山";
-                break;
-            case 5:
-                map.put("ascriptionType", "天津博智恒达商业管理有限公司");
-                map.put("ascription", "天津博智恒达商业管理有限公司");
-                map.put("datas", capitalJournalService.getReportDatas(capitalJournal));
-                templateFile = basePath + "shangyetemplate.xls";
-                journalDateString = sdfOne.format(capitalJournal.getJournalDate());
-                sheetName = "商业";
-                break;
-            case 6:
-                map.put("ascriptionType", "博智房地产总公司");
-                map.put("ascription", "天津博智房地产经纪有限公司");
-                map.put("datas", capitalJournalService.getHousingBrokerageReportDatas(capitalJournal));
-                templateFile = basePath + "bozhifangdichantemplate.xls";
-                journalDateString = sdfTwo.format(capitalJournal.getJournalDate());
-                sheetName = "博智房地产";
-                break;
-            case 7:
-                String ascriptionTypeName2 = "";
-                switch (capitalJournal.getAscriptionType()) {
-                    case 7:
-                        ascriptionTypeName2 = "天津博智嘉颐物业服务有限公司宝坻分公司";
-                        map.put("ascription", "天津博智嘉颐物业服务有限公司宝坻分公司");
-                        sheetName = "物业";
-                        break;
-                    case 8:
-                        ascriptionTypeName2 = "天津博智嘉颐物业服务有限公司";
-                        map.put("ascription", "天津博智嘉颐物业服务有限公司");
-                        sheetName = "物业总公司";
-                        break;
-                }
-                map.put("ascriptionType", ascriptionTypeName2);
-                map.put("datas", capitalJournalService.getReportDatas(capitalJournal));
-                templateFile = basePath + "wuyetemplate.xls";
-                journalDateString = sdfOne.format(capitalJournal.getJournalDate());
-                break;
-        }
-
-        String fileName = new Date().getTime() + ".xls";
-        String tempPath = path + File.separator + fileName;
-        XLSTransformer transformer = new XLSTransformer();
-        map.put("journalDateString", journalDateString);
-        map.put("beginningAvailableFunds", capitalJournal.getBeginningAvailableFunds());
-        InputStream is = this.getClass().getResourceAsStream(templateFile);
-        Workbook workbook = transformer.transformXLS(is, map);
-        workbook.setSheetName(0, sheetName);
-        OutputStream tempOS = new FileOutputStream(tempPath);
-        try {
-            workbook.write(tempOS);
-            tempOS.flush();
-        } catch (Exception e) {
-            new RuntimeException(e);
-        } finally {
-            tempOS.close();
-        }
-        return tempPath;
-    }*/
 }

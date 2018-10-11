@@ -6,18 +6,18 @@ import java.util.List;
 /**
  * Created by Administrator on 2018/10/10.
  */
-public class ProjectSourceAmount  implements Serializable {
+public class ProjectSourceAmount implements Serializable {
 
-    private String PorjectName;
+    private String projectName;
 
     private List<SourceAmountEntity> sourceAmountEntityList;
 
-    public String getPorjectName() {
-        return PorjectName;
+    public String getProjectName() {
+        return projectName;
     }
 
-    public void setPorjectName(String porjectName) {
-        PorjectName = porjectName;
+    public void setProjectName(String projectName) {
+        this.projectName = projectName;
     }
 
     public List<SourceAmountEntity> getSourceAmountEntityList() {
