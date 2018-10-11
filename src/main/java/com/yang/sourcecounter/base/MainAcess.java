@@ -2,6 +2,7 @@ package com.yang.sourcecounter.base;
 
 import com.yang.sourcecounter.command.CommandExecute;
 import com.yang.sourcecounter.command.GitCommandExecute;
+import com.yang.sourcecounter.command.LinuxCmdExecute;
 import com.yang.sourcecounter.command.WindowsCmdExecute;
 import com.yang.sourcecounter.entity.ProjectSourceAmount;
 import com.yang.sourcecounter.entity.SourceAmountEntity;
@@ -22,7 +23,7 @@ import java.util.*;
  */
 public class MainAcess {
 
-    public static final String MAIN_PROPERTIES = "main.properties";
+    public static final String MAIN_PROPERTIES = "base.properties";
 
     public static void main(String[] args) throws Exception {
 
@@ -36,7 +37,7 @@ public class MainAcess {
             e.printStackTrace();
         }
 
-        // 获取cloc路径
+        // 获取cloc.ext的路径（即classpath）
         URL classUrl = Thread.currentThread().getContextClassLoader().getResource("");
         String clocBasePath = classUrl.getPath();
 
@@ -45,13 +46,17 @@ public class MainAcess {
         List<String> gitDirectorys = new ArrayList<String>();
         File gitBaseDirectory = new File(gitBasePath);
         List<File> gitFiles = Arrays.asList(gitBaseDirectory.listFiles());
+
+        // 剔除所有非git项目文件夹 如果没有保留下一个抛出警告
+//        filecheck(gitFiles);
+
         for (File file : gitFiles) {
             gitDirectorys.add(file.getName());
         }
 
         GitCommandExecute gitCommandExecute = GitCommandExecute.getGitCommandExecute();
 
-        // 清空clocTxt文件夹
+        // 清空clocTxt文件夹 clocTxt为cloc报告缓存文件夹
         File clocTxt = new File(clocBasePath + "clocTxt");
         if (clocTxt.exists()) {
             FileUtils.deleteDirectory(clocTxt);
@@ -59,11 +64,15 @@ public class MainAcess {
         clocTxt.mkdirs();
 
         // 根据配置获取和操作系统相对应的命令执行类
-        String systemtype = properties.getProperty("systemtype");
+        String osName = System.getProperties().getProperty("os.name");
+        osName = osName.toUpperCase();
+        System.out.println(osName);
 
         CommandExecute commandExecute = null;
-        if ("windows".equals(systemtype)) {
+        if (osName.indexOf("WINDOWS") >= 0) {
             commandExecute = WindowsCmdExecute.getWindowsCmdExecute();
+        }else{
+            commandExecute = LinuxCmdExecute.getLinuxCmdExecute();
         }
 
         for (String gitDirectory : gitDirectorys) {
@@ -73,11 +82,14 @@ public class MainAcess {
             // 使用cloc 统计个项目的代码量 并在temp文件夹中生成统计txt
 
             List<String> paramterStrs = new ArrayList<String>();
+            // cloc.exe所在文件夹 （windows）
             paramterStrs.add(clocBasePath);
+            // 每个项目的git文件夹
             paramterStrs.add(gitPath);
+            // 每个项目文件夹的名称
             paramterStrs.add(gitDirectory);
 
-            commandExecute.execute(systemtype, paramterStrs);
+            commandExecute.execute(paramterStrs);
         }
 
         // 解析cloc生成的文件

@@ -29,7 +29,7 @@ public class ExcelGeneraor {
 
     public String createExcel(List<ProjectSourceAmount> projectSourceAmounts, File reportDirectory, Properties properties, URL classUrl) throws Exception {
         OutputStream tempOS = null;
-//        String reportPath = reportDirectory + "/" + CommonsDataFormat.SDF_YMD.format(new Date()) + "SourceCountReport.xls";
+
         String reportPath = reportDirectory + "/" + CommonsDataFormat.SDF_YMD.format(new Date()) + "日代码统计报告.xls";
 
         XLSTransformer transformer = new XLSTransformer();

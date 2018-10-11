@@ -8,5 +8,5 @@ import java.util.List;
 public interface CommandExecute {
     public String execute(String commandStr) throws Exception;
 
-    public String execute(String systemtype, List<String> paramterStrs) throws Exception;
+    public String execute(List<String> paramterStrs) throws Exception;
 }

@@ -11,7 +11,6 @@ import java.util.List;
  */
 public class WindowsCmdExecute implements CommandExecute {
 
-
     private static WindowsCmdExecute windowsCmdExecute;
 
     private WindowsCmdExecute() {
@@ -57,11 +56,9 @@ public class WindowsCmdExecute implements CommandExecute {
         }
     }
 
-    public String execute(String systemtype, List<String> paramterStrs) throws IOException {
+    public String execute(List<String> paramterStrs) throws IOException {
 
-
-//        String commandStr = clocBasePath + "cloc-1.80.exe " + gitPath + " > " + clocBasePath + "clocTxt/" + File.separator + gitDirectory + ".txt";
-
+        // cloc.exe所在文件夹 （windows）
         String clocBasePath = paramterStrs.get(0);
 
         StringBuffer stringBuffer = new StringBuffer();
@@ -69,6 +66,8 @@ public class WindowsCmdExecute implements CommandExecute {
         if ('/' == (clocBasePath.charAt(0))) {
             clocBasePath = clocBasePath.substring(1);
         }
+
+        // 拼接命令字符串  paramterStrs.get(1)为每个项目的git文件夹 paramterStrs.get(2)每个项目文件夹的名称
         stringBuffer.append(clocBasePath).append("cloc-1.80.exe ").append(paramterStrs.get(1)).append(" > ").append(clocBasePath).append("clocTxt/").append(paramterStrs.get(2)).append(".txt");
 
         String commandStr = stringBuffer.toString();
@@ -79,6 +78,7 @@ public class WindowsCmdExecute implements CommandExecute {
 
         System.out.println(commandStr);
 
+        // 在命令行下执行cloc 并获取输出
         try {
             Runtime runtime = Runtime.getRuntime();
             Process process = runtime.exec("cmd /c " + commandStr);
