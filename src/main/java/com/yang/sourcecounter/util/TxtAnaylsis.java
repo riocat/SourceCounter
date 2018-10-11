@@ -54,6 +54,9 @@ public class TxtAnaylsis {
                         if ("SUM:".equals(language)) {
                             language = language.replace(":", "");
                         }
+
+                        // TODO 添加过滤筛选 剔除不需要的类型 同时SUM要改为计算获得
+
                         sourceAmountEntity.setLanguage(language);
                         // files
                         sourceAmountEntity.setFiles(Integer.parseInt(matcher.group(2)));
@@ -69,6 +72,7 @@ public class TxtAnaylsis {
                 }
             }
 
+            // TODO 添加判断如果projectSourceAmount的sourceAmountEntityList为空不再向result里添加
             result.add(projectSourceAmount);
         }
 

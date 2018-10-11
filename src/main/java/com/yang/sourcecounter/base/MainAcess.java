@@ -47,7 +47,7 @@ public class MainAcess {
         File gitBaseDirectory = new File(gitBasePath);
         List<File> gitFiles = Arrays.asList(gitBaseDirectory.listFiles());
 
-        // 剔除所有非git项目文件夹 如果没有保留下一个抛出警告
+        // TODO 剔除所有非git项目文件夹 如果没有保留下一个抛出警告
 //        filecheck(gitFiles);
 
         for (File file : gitFiles) {
@@ -100,10 +100,6 @@ public class MainAcess {
         if (sumonly != null && "true".equals(sumonly)) {
             for (ProjectSourceAmount projectSourceAmount : projectSourceAmounts) {
                 List<SourceAmountEntity> sourceAmountEntityList = projectSourceAmount.getSourceAmountEntityList();
-
-/*                List<SourceAmountEntity> targetList = sourceAmountEntityList.stream().filter((sourceAmountEntity) -> {
-                    return "SUM".equals(sourceAmountEntity.getLanguage());
-                });*/
 
                 List<SourceAmountEntity> targetList = new ArrayList<SourceAmountEntity>();
                 for (SourceAmountEntity sourceAmountEntity : sourceAmountEntityList) {
