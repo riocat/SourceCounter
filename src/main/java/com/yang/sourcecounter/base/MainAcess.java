@@ -24,8 +24,6 @@ public class MainAcess {
 
     public static final String MAIN_PROPERTIES = "main.properties";
 
-    public static final String LANGUAGE = "";
-
     public static void main(String[] args) throws Exception {
 
         // 获取所有配置
@@ -90,6 +88,7 @@ public class MainAcess {
         if (sumonly != null && "true".equals(sumonly)) {
             for (ProjectSourceAmount projectSourceAmount : projectSourceAmounts) {
                 List<SourceAmountEntity> sourceAmountEntityList = projectSourceAmount.getSourceAmountEntityList();
+
 /*                List<SourceAmountEntity> targetList = sourceAmountEntityList.stream().filter((sourceAmountEntity) -> {
                     return "SUM".equals(sourceAmountEntity.getLanguage());
                 });*/
